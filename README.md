@@ -26,7 +26,7 @@
 4. Add token `tokens.txt'
       
    ```sh
-   tokenx.txt
+   tokens.txt
    ```
 
 5. Run the bot:
