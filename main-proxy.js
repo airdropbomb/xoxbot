@@ -319,7 +319,7 @@ async function main() {
     console.log(`Proxy: ${proxies.length}`);
     process.exit(1);
   }
-  console.log("Tool modified by the airdropbombnode Telegram group (https://t.me/airdropbombnode)".yellow);
+  console.log("Tool modified by Telegram group (https://t.me/airdropbombnode)".yellow);
   let maxThreads = settings.MAX_THREADS;
 
   const { endpoint: hasIDAPI, message } = await checkBaseUrl();
@@ -387,7 +387,7 @@ async function main() {
     }
 
     await sleep(3);
-    console.log("Tool modifed by the airdropbombnode Telegram group (https://t.me/airdropbombnode)".yellow);
+    console.log("Tool modifed by Telegram group (https://t.me/airdropbombnode)".yellow);
     console.log(`=============Completed all accounts | Waiting ${settings.TIME_SLEEP} minutes=============`.magenta);
     await sleep(settings.TIME_SLEEP * 60);
   }
