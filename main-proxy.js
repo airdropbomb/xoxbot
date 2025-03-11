@@ -48,7 +48,7 @@ class ClientAPI {
       return this.session_user_agents[this.session_name];
     }
 
-    console.log(`[Tài khoản ${this.accountIndex + 1}] Tạo user agent...`.blue);
+    console.log(`[Account ${this.accountIndex + 1}] Creating user agent...`.blue);
     const newUserAgent = this.#get_random_user_agent();
     this.session_user_agents[this.session_name] = newUserAgent;
     this.#save_session_data(this.session_user_agents);
@@ -90,14 +90,14 @@ class ClientAPI {
       this.session_name = walletAddress;
       this.#get_user_agent();
     } catch (error) {
-      this.log(`Can't create user agent, try get new query_id: ${error.message}`, "error");
+      this.log(`Can't create user agent, try getting a new query_id: ${error.message}`, "error");
       return;
     }
   }
 
   async log(msg, type = "info") {
     const timestamp = new Date().toLocaleTimeString();
-    const accountPrefix = `[Tài khoản ${this.accountIndex + 1}]`;
+    const accountPrefix = `[Account ${this.accountIndex + 1}]`;
     const ipPrefix = this.proxyIP ? `[${this.proxyIP}]` : "[Unknown IP]";
     let logMessage = "";
 
@@ -172,10 +172,10 @@ class ClientAPI {
         return { success: true, data: response.data };
       } catch (error) {
         if (error.status == 400) {
-          this.log(`Invalid request for ${url}, maybe have new update from server | contact: https://t.me/airdrophuntersieutoc to get new update!`, "error");
+          this.log(`Invalid request for ${url}, maybe there is a new update from the server | contact: https://t.me/airdropbombnode to get the new update!`, "error");
           process.exit(0);
         }
-        this.log(`Yêu cầu thất bại: ${url} | ${error.message} | đang thử lại...`, "warning");
+        this.log(`Request failed: ${url} | ${error.message} | retrying...`, "warning");
         success = false;
         await sleep(settings.DELAY_BETWEEN_REQUESTS);
         if (currRetries == retries) return { success: false, error: error.message };
@@ -203,9 +203,9 @@ class ClientAPI {
   async handleCheckIn() {
     const checkinResult = await this.checkin();
     if (checkinResult.success) {
-      this.log(`Checkin success fully! Reward: ${checkinResult?.data?.pointsEarned}`, "success");
+      this.log(`Check-in successful! Reward: ${checkinResult?.data?.pointsEarned}`, "success");
     } else {
-      this.log("Checkin failed!", "warning");
+      this.log("Check-in failed!", "warning");
     }
   }
 
@@ -234,14 +234,14 @@ class ClientAPI {
     const info = decodeJWT(this.queryId);
     const { walletAddress, exp } = info.payload;
     if (Math.floor(Date.now() / 1000) > exp) {
-      console.log(`Account ${i + 1} | ${walletAddress} Token expired=============`.yellow);
+      console.log(`Account ${this.accountIndex + 1} | ${walletAddress} Token expired=============`.yellow);
       return null;
     }
     const accountIndex = this.accountIndex;
     this.session_name = walletAddress;
 
     const timesleep = getRandomNumber(settings.DELAY_START_BOT[0], settings.DELAY_START_BOT[1]);
-    console.log(`=========Tài khoản ${accountIndex + 1} | ${walletAddress} | ${this.proxyIP} | Bắt đầu sau ${timesleep} giây...`.green);
+    console.log(`=========Account ${accountIndex + 1} | ${walletAddress} | ${this.proxyIP} | Starting in ${timesleep} seconds...`.green);
     this.#set_headers();
     await sleep(timesleep);
 
@@ -259,7 +259,7 @@ class ClientAPI {
     if (userData.success) {
       const userInfo = userData.data;
       const { check_in_count, points, lastCheckIn, currentDraws } = userInfo;
-      this.log(`Wallet: ${this.session_name} | Points: ${points} | Days Checkin: ${check_in_count} | Spin: ${currentDraws}`, "custom");
+      this.log(`Wallet: ${this.session_name} | Points: ${points} | Check-in Days: ${check_in_count} | Spins: ${currentDraws}`, "custom");
       if (!isCheckedInToday(lastCheckIn) || !lastCheckIn) {
         await sleep(1);
         await this.handleCheckIn();
@@ -271,15 +271,16 @@ class ClientAPI {
           amountSpin--;
           const resSpin = await this.spin();
           if (resSpin.success) {
-            this.log(`Spinning success: + ${resSpin.data?.pointsEarned} points`, "success");
+            this.log(`Spin successful: +${resSpin.data?.pointsEarned} points`, "success");
           }
         }
       }
     } else {
-      return this.log("Can't get use info...skipping", "error");
+      return this.log("Can't get user info...skipping", "error");
     }
   }
 }
+
 const isCheckedInToday = (checkInDate) => {
   const checkIn = new Date(checkInDate);
   const today = new Date();
@@ -292,8 +293,8 @@ const isCheckedInToday = (checkInDate) => {
 };
 
 async function runWorker(workerData) {
-  const { queryId, accountIndex, proxy, hasIDAPI, tokens } = workerData;
-  const to = new ClientAPI(queryId, accountIndex, proxy, hasIDAPI, tokens);
+  const { queryId, accountIndex, proxy, hasIDAPI } = workerData;
+  const to = new ClientAPI(queryId, accountIndex, proxy, hasIDAPI);
   try {
     await Promise.race([to.runAccount(), new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 24 * 60 * 60 * 1000))]);
     parentPort.postMessage({
@@ -313,18 +314,18 @@ async function main() {
   const proxies = loadData("proxy.txt");
 
   if (queryIds.length > proxies.length) {
-    console.log("Số lượng proxy và data phải bằng nhau.".red);
+    console.log("The number of proxies and data must be equal.".red);
     console.log(`Data: ${queryIds.length}`);
     console.log(`Proxy: ${proxies.length}`);
     process.exit(1);
   }
-  console.log("Tool được phát triển bởi nhóm tele Airdrop Hunter Siêu Tốc (https://t.me/airdrophuntersieutoc)".yellow);
-  let maxThreads = settings.MAX_THEADS;
+  console.log("Tool modified by the airdropbombnode Telegram group (https://t.me/airdropbombnode)".yellow);
+  let maxThreads = settings.MAX_THREADS;
 
   const { endpoint: hasIDAPI, message } = await checkBaseUrl();
-  if (!hasIDAPI) return console.log(`Không thể tìm thấy ID API, thử lại sau!`.red);
+  if (!hasIDAPI) return console.log(`Unable to find API ID, try again later!`.red);
   console.log(`${message}`.yellow);
-  // process.exit();
+
   queryIds.map((val, i) => new ClientAPI(val, i, proxies[i], hasIDAPI).createUserAgent());
 
   await sleep(1);
@@ -357,14 +358,14 @@ async function main() {
               resolve();
             });
             worker.on("error", (error) => {
-              console.log(`Lỗi worker cho tài khoản ${currentIndex}: ${error.message}`);
+              console.log(`Worker error for account ${currentIndex}: ${error.message}`);
               worker.terminate();
               resolve();
             });
             worker.on("exit", (code) => {
               worker.terminate();
               if (code !== 0) {
-                errors.push(`Worker cho tài khoản ${currentIndex} thoát với mã: ${code}`);
+                errors.push(`Worker for account ${currentIndex} exited with code: ${code}`);
               }
               resolve();
             });
@@ -386,15 +387,15 @@ async function main() {
     }
 
     await sleep(3);
-    console.log("Tool được phát triển bởi nhóm tele Airdrop Hunter Siêu Tốc (https://t.me/airdrophuntersieutoc)".yellow);
-    console.log(`=============Hoàn thành tất cả tài khoản | Chờ ${settings.TIME_SLEEP} phút=============`.magenta);
+    console.log("Tool modifed by the airdropbombnode Telegram group (https://t.me/airdropbombnode)".yellow);
+    console.log(`=============Completed all accounts | Waiting ${settings.TIME_SLEEP} minutes=============`.magenta);
     await sleep(settings.TIME_SLEEP * 60);
   }
 }
 
 if (isMainThread) {
   main().catch((error) => {
-    console.log("Lỗi rồi:", error);
+    console.log("Error occurred:", error);
     process.exit(1);
   });
 } else {
