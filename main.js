@@ -9,6 +9,17 @@ const { sleep, loadData, saveToken, isTokenExpired, saveJson, updateEnv, getRand
 const { checkBaseUrl } = require("./checkAPI");
 const headers = require("./core/header");
 
+// Configuration variables from your original code
+const SKIP_TASKS = [];
+const BASE_URL = "https://api.x.ink/v1";
+const ENABLE_DEBUG = false;
+const ADVANCED_ANTI_DETECTION = false;
+const DELAY_BETWEEN_REQUESTS = [1, 5];
+const DELAY_START_BOT = [1, 5];
+const TIME_SLEEP = 1440;
+const MAX_THREADS = 50;
+const MAX_THREADS_NO_PROXY = 1;
+
 class ClientAPI {
   constructor(accountIndex, initData, session_name, baseURL) {
     this.accountIndex = accountIndex;
@@ -74,7 +85,7 @@ class ClientAPI {
 
   set_headers() {
     const platform = this.#get_platform(this.#get_user_agent());
-    this.headers["sec-ch-ua"] = `"Not)A;Brand";v="99", "${platform} WebView";v="127", "Chromium";v="127`;
+    this.headers["sec-ch-ua"] = `"Not)A;Brand";v="99", "${platform} WebView";v="127", "Chromium";v="127"`;
     this.headers["sec-ch-ua-platform"] = platform;
     this.headers["User-Agent"] = this.#get_user_agent();
   }
@@ -102,20 +113,10 @@ class ClientAPI {
     console.log(logMessage);
   }
 
-  async makeRequest(
-    url,
-    method,
-    data = {},
-    options = {
-      retries: 1,
-      isAuth: false,
-    }
-  ) {
+  async makeRequest(url, method, data = {}, options = { retries: 1, isAuth: false }) {
     const { retries, isAuth } = options;
 
-    const headers = {
-      ...this.headers,
-    };
+    const headers = { ...this.headers };
 
     if (!isAuth) {
       headers["Authorization"] = `Bearer ${this.token}`;
@@ -141,7 +142,7 @@ class ClientAPI {
         }
         this.log(`Yêu cầu thất bại: ${url} | ${error.message} | đang thử lại...`, "warning");
         success = false;
-        await sleep(settings.DELAY_BETWEEN_REQUESTS);
+        await sleep(DELAY_BETWEEN_REQUESTS); // Use the const instead of settings
         if (currRetries == retries) return { success: false, error: error.message };
       }
       currRetries++;
@@ -167,7 +168,7 @@ class ClientAPI {
   async handleCheckIn() {
     const checkinResult = await this.checkin();
     if (checkinResult.success) {
-      this.log(`Checkin success fully! Reward: ${checkinResult.data?.pointsEarned} `, "success");
+      this.log(`Checkin success fully! Reward: ${checkinResult.data?.pointsEarned}`, "success");
     } else {
       this.log("Checkin failed!", "warning");
     }
@@ -228,14 +229,27 @@ const isCheckedInToday = (checkInDate) => {
   const checkIn = new Date(checkInDate);
   const today = new Date();
 
-  // Set the time of both dates to midnight (00:00:00) for comparison
   checkIn.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
 
-  return checkIn.getTime() === today.getTime(); // Returns true if checked in today
+  return checkIn.getTime() === today.getTime();
 };
 
 async function main() {
+  // Clear console (equivalent to os.system("cls" if os.name == "nt" else "clear"))
+  console.clear();
+
+  // Print the banner
+  console.log(`
+       █████╗ ██████╗ ██████╗     ███╗   ██╗ ██████╗ ██████╗ ███████╗
+      ██╔══██╗██╔══██╗██╔══██╗    ████╗  ██║██╔═══██╗██╔══██╗██╔════╝
+      ███████║██║  ██║██████╔╝    ██╔██╗ ██║██║   ██║██║  ██║█████╗  
+      ██╔══██║██║  ██║██╔══██╗    ██║╚██╗██║██║   ██║██║  ██║██╔══╝  
+      ██║  ██║██████╔╝██████╔╝    ██║ ╚████║╚██████╔╝██████╔╝███████╗
+      ╚═╝  ╚═╝╚═════╝ ╚═════╝     ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝  
+        By : ADB NODE
+  `.white);
+
   console.log(colors.yellow("Tool được phát triển bởi nhóm tele Airdrop Hunter Siêu Tốc (https://t.me/airdrophuntersieutoc)"));
 
   const { endpoint: hasIDAPI, message } = await checkBaseUrl();
@@ -244,7 +258,7 @@ async function main() {
 
   const data = loadData("tokens.txt");
 
-  const maxThreads = settings.MAX_THEADS_NO_PROXY;
+  const maxThreads = MAX_THREADS_NO_PROXY;
   while (true) {
     for (let i = 0; i < data.length; i += maxThreads) {
       const batch = data.slice(i, i + maxThreads);
@@ -269,8 +283,8 @@ async function main() {
       await Promise.allSettled(promises);
     }
     await sleep(5);
-    console.log(`Hoàn thành tất cả tài khoản | Chờ ${settings.TIME_SLEEP} phút=============`.magenta);
-    await sleep(settings.TIME_SLEEP * 60);
+    console.log(`Hoàn thành tất cả tài khoản | Chờ ${TIME_SLEEP} phút=============`.magenta);
+    await sleep(TIME_SLEEP * 60);
   }
 }
 
