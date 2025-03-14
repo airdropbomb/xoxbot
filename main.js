@@ -9,17 +9,6 @@ const { sleep, loadData, saveToken, isTokenExpired, saveJson, updateEnv, getRand
 const { checkBaseUrl } = require("./checkAPI");
 const headers = require("./core/header");
 
-// Configuration variables from your original code
-const SKIP_TASKS = [];
-const BASE_URL = "https://api.x.ink/v1";
-const ENABLE_DEBUG = false;
-const ADVANCED_ANTI_DETECTION = false;
-const DELAY_BETWEEN_REQUESTS = [1, 5];
-const DELAY_START_BOT = [1, 5];
-const TIME_SLEEP = 1440;
-const MAX_THREADS = 50;
-const MAX_THREADS_NO_PROXY = 1;
-
 class ClientAPI {
   constructor(accountIndex, initData, session_name, baseURL) {
     this.accountIndex = accountIndex;
@@ -85,7 +74,7 @@ class ClientAPI {
 
   set_headers() {
     const platform = this.#get_platform(this.#get_user_agent());
-    this.headers["sec-ch-ua"] = `"Not)A;Brand";v="99", "${platform} WebView";v="127", "Chromium";v="127"`;
+    this.headers["sec-ch-ua"] = `"Not)A;Brand";v="99", "${platform} WebView";v="127", "Chromium";v="127`;
     this.headers["sec-ch-ua-platform"] = platform;
     this.headers["User-Agent"] = this.#get_user_agent();
   }
@@ -113,10 +102,20 @@ class ClientAPI {
     console.log(logMessage);
   }
 
-  async makeRequest(url, method, data = {}, options = { retries: 1, isAuth: false }) {
+  async makeRequest(
+    url,
+    method,
+    data = {},
+    options = {
+      retries: 1,
+      isAuth: false,
+    }
+  ) {
     const { retries, isAuth } = options;
 
-    const headers = { ...this.headers };
+    const headers = {
+      ...this.headers,
+    };
 
     if (!isAuth) {
       headers["Authorization"] = `Bearer ${this.token}`;
@@ -137,12 +136,12 @@ class ClientAPI {
         return { success: true, data: response.data };
       } catch (error) {
         if (error.status == 400) {
-          this.log(`Invalid request for ${url}, maybe there is a new update from the server | contact: https://t.me/airdropbombnode to get the new update!`, "error");
+          this.log(`Invalid request for ${url}, maybe there’s a new update from the server | contact: https://t.me/airdropbombnode to get the new update!`, "error");
           process.exit(0);
         }
         this.log(`Request failed: ${url} | ${error.message} | retrying...`, "warning");
         success = false;
-        await sleep(DELAY_BETWEEN_REQUESTS);
+        await sleep(settings.DELAY_BETWEEN_REQUESTS);
         if (currRetries == retries) return { success: false, error: error.message };
       }
       currRetries++;
@@ -215,12 +214,12 @@ class ClientAPI {
           amountSpin--;
           const resSpin = await this.spin();
           if (resSpin.success) {
-            this.log(`Spin successful: +${resSpin.data?.pointsEarned} points`, "success");
+            this.log(`Spin successful: + ${resSpin.data?.pointsEarned} points`, "success");
           }
         }
       }
     } else {
-      return this.log("Can't get user info...skipping", "error");
+      return this.log("Can't get user info... skipping", "error");
     }
   }
 }
@@ -229,34 +228,23 @@ const isCheckedInToday = (checkInDate) => {
   const checkIn = new Date(checkInDate);
   const today = new Date();
 
+  // Set the time of both dates to midnight (00:00:00) for comparison
   checkIn.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
 
-  return checkIn.getTime() === today.getTime();
+  return checkIn.getTime() === today.getTime(); // Returns true if checked in today
 };
 
 async function main() {
-  console.clear();
-
-  console.log(`
-       █████╗ ██████╗ ██████╗     ███╗   ██╗ ██████╗ ██████╗ ███████╗
-      ██╔══██╗██╔══██╗██╔══██╗    ████╗  ██║██╔═══██╗██╔══██╗██╔════╝
-      ███████║██║  ██║██████╔╝    ██╔██╗ ██║██║   ██║██║  ██║█████╗  
-      ██╔══██║██║  ██║██╔══██╗    ██║╚██╗██║██║   ██║██║  ██║██╔══╝  
-      ██║  ██║██████╔╝██████╔╝    ██║ ╚████║╚██████╔╝██████╔╝███████╗
-      ╚═╝  ╚═╝╚═════╝ ╚═════╝     ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝  
-        By : ADB NODE
-  `.white);
-
-  console.log(colors.yellow("Tool modified by Telegram group (https://t.me/airdropbombnode)"));
+  console.log(colors.yellow("Tool modified by the Telegram group (https://t.me/airdrobombnode)"));
 
   const { endpoint: hasIDAPI, message } = await checkBaseUrl();
-  if (!hasIDAPI) return console.log(`Unable to find API ID, try again later!`.red);
+  if (!hasIDAPI) return console.log(`Could not find API ID, try again later!`.red);
   console.log(`${message}`.yellow);
 
   const data = loadData("tokens.txt");
 
-  const maxThreads = MAX_THREADS_NO_PROXY;
+  const maxThreads = settings.MAX_THEADS_NO_PROXY;
   while (true) {
     for (let i = 0; i < data.length; i += maxThreads) {
       const batch = data.slice(i, i + maxThreads);
@@ -281,8 +269,8 @@ async function main() {
       await Promise.allSettled(promises);
     }
     await sleep(5);
-    console.log(`Completed all accounts | Waiting ${TIME_SLEEP} minutes=============`.magenta);
-    await sleep(TIME_SLEEP * 60);
+    console.log(`Completed all accounts | Waiting ${settings.TIME_SLEEP} minutes=============`.magenta);
+    await sleep(settings.TIME_SLEEP * 60);
   }
 }
 
